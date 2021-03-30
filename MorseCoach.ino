@@ -53,8 +53,8 @@ byte mode = L;
 byte clicked_buttons;
 byte menu_idx = 0;
 
-//unsigned long timeUnit = (1000*1.2/WPM);
-unsigned long timeUnit = (1000*1.2/savedData[0]);
+// Time unit for common method 
+unsigned long timeUnit; // = (1000*1.2/savedData[0]);
 
 // Time Unit for Farnworth method
 unsigned long timeUnitf;
@@ -62,8 +62,8 @@ unsigned long timeUnitf;
 // 1st Line string
 char firstLinestr[16];
 
+// Flag to indicated that saved data is valid
 boolean saved = true;
-
 
 //! The LCD display object.
 Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
@@ -74,7 +74,6 @@ void (*state)() = NULL;
 
 //*****************************************
 void setup() {
-  
   int savedDataVal[(sizeof(savedData)/sizeof(savedData[0]))];
   
   randomSeed(analogRead(0));
@@ -116,11 +115,11 @@ void startMorse(){
 
 //*****************************************
 void config_Menu() {
-  lcd.setBacklight(RED);
+  lcd.setBacklight(YELLOW);
   lcd.clear();
-  lcd.print (F("Config:Use ")); lcd.write(UP); lcd.write(DOWN); lcd.write(0x7F); lcd.write(0x7E);
+  lcd.print (F("Config use: ")); lcd.write(UP); lcd.write(DOWN); lcd.write(0x7F); lcd.write(0x7E);
   lcd.setCursor(0,1);
-  lcd.print("Wait...");
+  lcd.print(F("SELECT to return"));
   delay(5000);
   state = menuOption;
 }
@@ -139,8 +138,10 @@ void menuOption(){
       menu_idx = (menu_idx < menuLen) ? menu_idx + 1 : 0;
       lcd.clear();
     }
-    else if (clicked_buttons & (BUTTON_UP|BUTTON_DOWN))
+    else if (clicked_buttons & (BUTTON_UP|BUTTON_DOWN)) {
       configValue(menu_idx);  
+      lcd.setBacklight(YELLOW);
+    }
     else if (clicked_buttons & BUTTON_SELECT) {
     state = splashScreen;
     return;
@@ -168,7 +169,7 @@ void read_button_clicks() {
 void splashScreen(){
   lcd.clear();
   lcd.setBacklight(TEAL);
-  lcd.print(F("Morse Gen V0.1"));
+  lcd.print(F("Morse Gen V0.2"));
   delay(2000);
   lcd.setBacklight(GREEN);
   lcd.clear();
@@ -218,7 +219,6 @@ void sendSequence(byte number){
   else delay (wordSpace - t1);
 }
 
-
 //*****************************************
 void playLetter(byte idx) {  
   byte sizeLetter = CHARS[idx][2];
@@ -242,6 +242,7 @@ void printLetter(byte idx){
 
 //*****************************************
 void configValue(byte idx) {
+  lcd.setBacklight(VIOLET);
   while (1){
     read_button_clicks();
     if (clicked_buttons & BUTTON_UP) { 
@@ -264,6 +265,11 @@ void configValue(byte idx) {
       lcd.setCursor(0,1);  
      }
     else if (clicked_buttons & BUTTON_SELECT){
+      if (checkInc()) {
+         lcd.clear();    
+         lcd.setBacklight(VIOLET);
+         break;
+      }   	
       lcd.clear();
       lcd.setCursor(0,1);
       EEPROM.put(0,savedData);  
@@ -271,4 +277,16 @@ void configValue(byte idx) {
       return;
     }  
   }
+}
+
+boolean checkInc() {
+if ((savedData[0] < savedData[1])|(savedData[3] > savedData[4])) {
+   lcd.setBacklight(RED);
+   lcd.clear();
+   lcd.print(F("Please check"));
+   lcd.setCursor(0,1);
+   lcd.print(F("Inconsistency !"));
+   delay (5000);
+   return true;
+   } else return false;
 }
