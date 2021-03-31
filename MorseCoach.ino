@@ -1,3 +1,8 @@
+//******************************
+//*Author: Edson Santos
+//*Email: pu2tno@pilotbeacon.com
+//******************************
+
 #include <EEPROM.h>
 #include <Adafruit_RGBLCDShield.h>
 #include "morse.h"
@@ -76,7 +81,7 @@ void (*state)() = NULL;
 void setup() {
   int savedDataVal[(sizeof(savedData)/sizeof(savedData[0]))];
   randomSeed(analogRead(0));
-  Serial.begin(9600);  
+  // Serial.begin(9600); // Uncomment to support serial communication  
   lcd.begin(16, 2);
 
 
@@ -90,7 +95,6 @@ void setup() {
 
   EEPROM.get (0,savedDataVal);
   for (int i=0; i<(sizeof(savedDataVal)/sizeof(savedDataVal[0])); i++) {
-    Serial.println(savedDataVal[i]);
     if ((savedDataVal[i]<savedDataMin[i]) | (savedDataVal[i]>savedDataMax[i])){
       savedData[i] = -1;
       saved = false;
