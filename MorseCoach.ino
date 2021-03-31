@@ -31,11 +31,12 @@ const byte CHARS[][3] = {
 //byte PARIS[] = {12,4,20,2,3};
 
 
-const char *const menuOptions[] = { "Word p/ minute","Word p/ min (F)", "Mode", "Word len min", "Word len max", "Buzz", "Qty of letters" };
-// savedData[] = {WPM, WPM(F),Mode, MinWord, MaxWord, Buzz, Num Chars}
-int savedData[] = {20, 13, 1, 5, 5, 700, 27}; 
-int savedDataMax[] = {40, 40, 1, 9, 9, 800, 37};
-int savedDataMin[]= {5, 5, 1, 4, 4, 700, 1};
+const char *const menuOptions[] = { "Words p/ minute","Words p/ min (F)", "Mode", "Word len min", "Word len max", "Buzz (KHz)", "Qty. of letters", "Qty. of numbers" };
+const char *const modeOptions[] = {"Letters","Numbers","Mixed"};
+// savedData[] = {WPM, WPM(F),Mode, MinWord, MaxWord, Buzz, Qty Letters , Qty Numbers}
+int savedData[] = {20, 13, 1, 5, 5, 700, 27, 10};
+int savedDataMax[] = {40, 40, 3, 9, 9, 800, 27, 10};
+int savedDataMin[]= {5, 5, 1, 4, 4, 700, 1, 1};
 
 byte icons[2][8] = { { 0x04,0x0e,0x15,0x04,0x04,0x04,0x04 },
                      { 0x04,0x04,0x04,0x04,0x15,0x0e,0x04 } };
@@ -43,13 +44,12 @@ byte icons[2][8] = { { 0x04,0x0e,0x15,0x04,0x04,0x04,0x04 },
 //! Enum of backlight colors.
 enum Icons {UP=0x00, DOWN};
 enum BackLightColor { RED=0x1, GREEN, YELLOW, BLUE, VIOLET, TEAL, WHITE };
-enum Mode { L=0x01, N, C, M }; //Letter, Numbers, Call Sign, Mix
+enum Mode { Letters=0x01, Numbers, Mixed }; //Letter, Numbers, Mix
 
 
 
 byte mult = 0;
 byte colPos = 0;
-byte mode = L;
 byte clicked_buttons;
 byte menu_idx = 0;
 
@@ -75,12 +75,10 @@ void (*state)() = NULL;
 //*****************************************
 void setup() {
   int savedDataVal[(sizeof(savedData)/sizeof(savedData[0]))];
-  
   randomSeed(analogRead(0));
   Serial.begin(9600);  
   lcd.begin(16, 2);
 
-  
 
   if (lcd.readButtons() & (BUTTON_UP | BUTTON_DOWN)) state = config_Menu;
   else state = splashScreen;
@@ -92,13 +90,13 @@ void setup() {
 
   EEPROM.get (0,savedDataVal);
   for (int i=0; i<(sizeof(savedDataVal)/sizeof(savedDataVal[0])); i++) {
+    Serial.println(savedDataVal[i]);
     if ((savedDataVal[i]<savedDataMin[i]) | (savedDataVal[i]>savedDataMax[i])){
-      saved=false;
-      break;
-    }
-    else EEPROM.get (0,savedData);   
+      savedData[i] = -1;
+      saved = false;
+    }  
+    if(saved) EEPROM.get (0,savedData);  
   }
-
 }
 
 //*****************************************
@@ -109,7 +107,7 @@ void loop() {
 
 //*****************************************
 void startMorse(){
-    sendSequence((byte)random(savedData[3],savedData[4]+1));
+  sendSequence((byte)random(savedData[3],savedData[4]+1));
 }
 
 
@@ -150,7 +148,10 @@ void menuOption(){
      lcd.print(menuOptions[menu_idx]);
      lcd.setCursor(0,1);
      lcd.print (savedData[menu_idx]);
-         
+     if (menu_idx == 2) { 
+        lcd.print (" - ");
+        lcd.print (modeOptions[savedData[2]-1]);     
+     }
   }
 }
 
@@ -170,10 +171,12 @@ void splashScreen(){
   lcd.clear();
   lcd.setBacklight(TEAL);
   lcd.print(F("Morse Gen V0.2"));
+  lcd.setCursor(0,1);
+  lcd.print("Mode: "); lcd.print(modeOptions[savedData[2]-1]); 
   delay(2000);
   lcd.setBacklight(GREEN);
   lcd.clear();
-  lcd.setCursor(0,0);
+ // lcd.setCursor(0,0);
   lcd.print(savedData[0]); lcd.print(F(" cWPM ")); lcd.print (savedData[1]); lcd.print(F(" eWPM"));
   lcd.setCursor(0,1);
   if (saved) state = startMorse;
@@ -183,9 +186,10 @@ void splashScreen(){
 
 //*****************************************
 void sendSequence(byte number){
+  byte localnr;
   unsigned int t0,t1,t2 = 0;
-  timeUnit = (1000*1.2/savedData[0]);// in mili seconds
-  timeUnitf = ((((60*savedData[0]) - (37.2*savedData[1]))/(savedData[0]*savedData[1]))/19)*1000;
+  timeUnit = (1000*1.2/savedData[0]); // in mili seconds
+  timeUnitf = ((((60*savedData[0]) - (37.2*savedData[1]))/(savedData[0]*savedData[1]))/19)*1000; // in mili seconds
   if ((colPos+number)>16){
     t0 = millis();
     lcd.clear();
@@ -197,7 +201,22 @@ void sendSequence(byte number){
     t2 = millis() - t0;
   }
   for (int i=0; i<number; i++) {
-    byte localnr = random(1,savedData[6]+1);
+    switch (savedData[2]) {
+      case Letters:
+          localnr = random(1,savedData[6]);
+          break;
+      case Numbers:
+          localnr = random(27,savedData[7]+27);
+	  break;
+      case Mixed:
+	  localnr = random(1,38);
+          break;
+      default: //Letters
+          localnr = random(1,savedData[6]);
+	  break;
+    }
+
+//    byte localnr = random(1,savedData[6]+1);
     playLetter(localnr);    
 // display letter and consider time spent to process it
     t0 = millis(); 
@@ -250,18 +269,28 @@ void configValue(byte idx) {
       else savedData[idx]++;
       lcd.setCursor(0,1);
       lcd.print(savedData[idx]); 
+      if (idx==2) {
+	      lcd.print(" - ");
+	      lcd.print(modeOptions[savedData[idx]-1]);
+        lcd.print("       ");	
+      }
       lcd.setCursor(0,1); 
     }
     else if (clicked_buttons & BUTTON_DOWN)
      {
       if (savedData[idx] == savedDataMin[idx]) savedData[idx] = savedDataMin[idx];
       else savedData[idx]--;
-      if (savedData[idx] == 9) {
-        lcd.print("  ");
+      if (savedData[idx] <= 9) {
         lcd.setCursor (0,1);
+        lcd.print("  ");
       }
       lcd.setCursor (0,1);
       lcd.print(savedData[idx]); 
+      if (idx==2) {
+        lcd.print(" - ");
+        lcd.print(modeOptions[savedData[idx]-1]);
+        lcd.print("       "); 
+      }
       lcd.setCursor(0,1);  
      }
     else if (clicked_buttons & BUTTON_SELECT){
@@ -279,6 +308,7 @@ void configValue(byte idx) {
   }
 }
 
+//*****************************************
 boolean checkInc() {
 if ((savedData[0] < savedData[1])|(savedData[3] > savedData[4])) {
    lcd.setBacklight(RED);
