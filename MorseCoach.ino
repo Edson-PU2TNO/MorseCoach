@@ -191,7 +191,7 @@ void splashScreen(){
 //*****************************************
 void sendSequence(byte number){
   byte localnr;
-  unsigned int t0,t1,t2 = 0;
+  unsigned long t0,t1,t2 = 0;
   timeUnit = (1000*1.2/savedData[0]); // in mili seconds
   timeUnitf = ((((60*savedData[0]) - (37.2*savedData[1]))/(savedData[0]*savedData[1]))/19)*1000; // in mili seconds
   if ((colPos+number)>16){
