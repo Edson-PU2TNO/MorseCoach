@@ -207,7 +207,7 @@ void sendSequence(byte number){
   for (int i=0; i<number; i++) {
     switch (savedData[2]) {
       case Letters:
-          localnr = random(1,savedData[6]);
+          localnr = random(1,savedData[6]+1);
           break;
       case Numbers:
           localnr = random(27,savedData[7]+27);
@@ -216,11 +216,9 @@ void sendSequence(byte number){
 	  localnr = random(1,38);
           break;
       default: //Letters
-          localnr = random(1,savedData[6]);
+          localnr = random(1,savedData[6]+1);
 	  break;
     }
-
-//    byte localnr = random(1,savedData[6]+1);
     playLetter(localnr);    
 // display letter and consider time spent to process it
     t0 = millis(); 
