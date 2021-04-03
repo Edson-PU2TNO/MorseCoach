@@ -81,10 +81,12 @@ void (*state)() = NULL;
 void setup() {
   int savedDataVal[(sizeof(savedData)/sizeof(savedData[0]))];
   randomSeed(analogRead(0));
-  // Serial.begin(9600); // Uncomment to support serial communication  
+  
+#if debug
+  Serial.begin(9600);  
+#endif
+
   lcd.begin(16, 2);
-
-
   if (lcd.readButtons() & (BUTTON_UP | BUTTON_DOWN)) state = config_Menu;
   else state = splashScreen;
 
@@ -96,6 +98,9 @@ void setup() {
   EEPROM.get (0,savedDataVal);
   for (int i=0; i<(sizeof(savedDataVal)/sizeof(savedDataVal[0])); i++) {
     if ((savedDataVal[i]<savedDataMin[i]) | (savedDataVal[i]>savedDataMax[i])){
+#if debug
+      Serial.println(savedDataVal[i]);
+#endif
       savedData[i] = -1;
       saved = false;
     }  
