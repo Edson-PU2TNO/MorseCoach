@@ -30,7 +30,7 @@ const byte CHARS[][3] = {
   {'7',0b11000,5},  {'8',0b11100,5},  {'9',0b11110,5}, // 36 (idx=35)
   {'0',0b11111,5}, // 37 (idx=36)
   
-  {'/',0b10010,5} // 38 (idx=37)  
+  {'/',0b10010,5}, {'?',0b001100,6}, {',',0b110011,6}, {'.',0b010101,6} // 41 (idx=40)  
 };
 
 //byte PARIS[] = {12,4,20,2,3};
@@ -218,7 +218,7 @@ void sendSequence(byte number){
           localnr = random(27,savedData[7]+27);
 	  break;
       case Mixed:
-	  localnr = random(1,38);
+	  localnr = random(1,41);
           break;
       default: //Letters
           localnr = random(1,savedData[6]+1);
