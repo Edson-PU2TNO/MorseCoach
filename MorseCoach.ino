@@ -37,10 +37,10 @@ const byte CHARS[][3] = {
 
 
 const char *const menuOptions[] = { "Words p/ minute","Words p/ min (F)", "Mode", "Word len min", "Word len max", "Buzz (KHz)", "Qty. of letters", "Qty. of numbers" };
-const char *const modeOptions[] = {"Letters","Numbers","Mixed"};
+const char *const modeOptions[] = {"Letters","Numbers","Mixed","Special"};
 // savedData[] = {WPM, WPM(F),Mode, MinWord, MaxWord, Buzz, Qty Letters , Qty Numbers}
 int savedData[] = {20, 13, 1, 5, 5, 700, 27, 10};
-int savedDataMax[] = {40, 40, 3, 9, 9, 800, 27, 10};
+int savedDataMax[] = {40, 40, 4, 9, 9, 800, 27, 10};
 int savedDataMin[]= {5, 5, 1, 4, 4, 700, 1, 1};
 
 byte icons[2][8] = { { 0x04,0x0e,0x15,0x04,0x04,0x04,0x04 },
@@ -49,7 +49,7 @@ byte icons[2][8] = { { 0x04,0x0e,0x15,0x04,0x04,0x04,0x04 },
 //! Enum of backlight colors.
 enum Icons {UP=0x00, DOWN};
 enum BackLightColor { RED=0x1, GREEN, YELLOW, BLUE, VIOLET, TEAL, WHITE };
-enum Mode { Letters=0x01, Numbers, Mixed }; //Letter, Numbers, Mix
+enum Mode { Letters=0x01, Numbers, Mixed, Special }; //Letter, Numbers, Mix, Special
 
 
 
@@ -220,6 +220,9 @@ void sendSequence(byte number){
       case Mixed:
 	  localnr = random(1,41);
           break;
+      case Special:
+	  localnr = random(36,41);
+  	  break;
       default: //Letters
           localnr = random(1,savedData[6]+1);
 	  break;
