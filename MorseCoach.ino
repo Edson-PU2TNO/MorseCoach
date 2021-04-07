@@ -30,14 +30,20 @@ const byte CHARS[][3] = {
   {'7',0b11000,5},  {'8',0b11100,5},  {'9',0b11110,5}, // 36 (idx=35)
   {'0',0b11111,5}, // 37 (idx=36)
   
-  {'/',0b10010,5}, {'?',0b001100,6}, {',',0b110011,6}, {'.',0b010101,6} // 41 (idx=40)  
+  {'/',0b10010,5}, {'?',0b001100,6}, {',',0b110011,6}, {'.',0b010101,6}, // 41 (idx=40)  
+
+  {'x',0b1000101,7}, // BK
+  {'x',0b10001,5}, // BT
+  {'x',0b10110,5}, // KN
+  {'x',0b000101,6} // SK 44 (idx=43)
+
 };
 
 //byte PARIS[] = {12,4,20,2,3};
 
 
 const char *const menuOptions[] = { "Words p/ minute","Words p/ min (F)", "Mode", "Word len min", "Word len max", "Buzz (KHz)", "Qty. of letters", "Qty. of numbers" };
-const char *const modeOptions[] = {"Letters","Numbers","Mixed","Special"};
+const char *const modeOptions[] = {"Letters","Numbers","Mixed","Special","ProSign"};
 // savedData[] = {WPM, WPM(F),Mode, MinWord, MaxWord, Buzz, Qty Letters , Qty Numbers}
 int savedData[] = {20, 13, 1, 5, 5, 700, 27, 10};
 int savedDataMax[] = {40, 40, 4, 9, 9, 800, 27, 10};
@@ -49,7 +55,7 @@ byte icons[2][8] = { { 0x04,0x0e,0x15,0x04,0x04,0x04,0x04 },
 //! Enum of backlight colors.
 enum Icons {UP=0x00, DOWN};
 enum BackLightColor { RED=0x1, GREEN, YELLOW, BLUE, VIOLET, TEAL, WHITE };
-enum Mode { Letters=0x01, Numbers, Mixed, Special }; //Letter, Numbers, Mix, Special
+enum Mode { Letters=0x01, Numbers, Mixed, Special, ProSign }; //Letter, Numbers, Mix, Special, ProSign
 
 
 
@@ -116,7 +122,9 @@ void loop() {
 
 //*****************************************
 void startMorse(){
-  sendSequence((byte)random(savedData[3],savedData[4]+1));
+  if (savedData[2] == (Letters | Numbers | Mixed)) 
+   sendSequence((byte)random(savedData[3],savedData[4]+1));
+  else sendSequence ((byte)1);
 }
 
 
@@ -216,16 +224,19 @@ void sendSequence(byte number){
           break;
       case Numbers:
           localnr = random(27,savedData[7]+27);
-	  break;
+          break;
       case Mixed:
-	  localnr = random(1,41);
+	        localnr = random(1,41);
           break;
       case Special:
-	  localnr = random(36,41);
-  	  break;
+	        localnr = random(36,41);
+  	      break;
+      case ProSign:
+	        localnr = random(41,44);
+  	      break;
       default: //Letters
           localnr = random(1,savedData[6]+1);
-	  break;
+	        break;
     }
     playLetter(localnr);    
 // display letter and consider time spent to process it
