@@ -49,11 +49,16 @@ int savedData[] = {20, 13, 1, 5, 5, 700, 27, 10};
 int savedDataMax[] = {40, 40, 4, 9, 9, 800, 27, 10};
 int savedDataMin[]= {5, 5, 1, 4, 4, 700, 1, 1};
 
-byte icons[2][8] = { { 0x04,0x0e,0x15,0x04,0x04,0x04,0x04 },
-                     { 0x04,0x04,0x04,0x04,0x15,0x0e,0x04 } };
+byte icons[6][8] = { { 0x04,0x0e,0x15,0x04,0x04,0x04,0x04 },
+                     { 0x04,0x04,0x04,0x04,0x15,0x0e,0x04 },
+                     { 0x10,0x18,0x18,0x00,0x07,0x02,0x02 },
+                     { 0x10,0x18,0x18,0x00,0x05,0x06,0x05 },
+                     { 0x14,0x18,0x14,0x00,0x19,0x15,0x13 },
+                     { 0x18,0x10,0x18,0x08,0x1d,0x06,0x05 }
+};
 
 //! Enum of backlight colors.
-enum Icons {UP=0x00, DOWN};
+enum Icons {UP=0x00, DOWN, BT, BK, KN, SK};
 enum BackLightColor { RED=0x1, GREEN, YELLOW, BLUE, VIOLET, TEAL, WHITE };
 enum Mode { Letters=0x01, Numbers, Mixed, Special, ProSign }; //Letter, Numbers, Mix, Special, ProSign
 
@@ -96,11 +101,15 @@ void setup() {
   if (lcd.readButtons() & (BUTTON_UP | BUTTON_DOWN)) state = config_Menu;
   else state = splashScreen;
 
+// Creating LCD chars
   lcd.createChar(UP, icons[UP]);
   lcd.createChar(DOWN, icons[DOWN]);  
-
+  lcd.createChar(BT, icons[BT]); 
+  lcd.createChar(BK, icons[BK]); 
+  lcd.createChar(KN, icons[KN]); 
+  lcd.createChar(SK, icons[SK]);
+ 
 // Validating savedData
-
   EEPROM.get (0,savedDataVal);
   for (int i=0; i<(sizeof(savedDataVal)/sizeof(savedDataVal[0])); i++) {
     if ((savedDataVal[i]<savedDataMin[i]) | (savedDataVal[i]>savedDataMax[i])){
@@ -275,7 +284,8 @@ void playLetter(byte idx) {
 
 //*****************************************
 void printLetter(byte idx){
-  lcd.print((char)CHARS[idx][0]);
+  if (idx > 40) lcd.write((char)CHARS[idx][0]); 
+  else lcd.print((char)CHARS[idx][0]);
   firstLinestr[colPos] = (char)CHARS[idx][0];
   colPos++;
 }
