@@ -168,7 +168,8 @@ void menuOption(){
       lcd.setBacklight(YELLOW);
     }
     else if (clicked_buttons & BUTTON_SELECT) {
-    state = splashScreen;
+    if (checkInc()) state = menuOption; 
+    else state = splashScreen;
     return;
     }
      lcd.setCursor(0,0);
@@ -203,7 +204,6 @@ void splashScreen(){
   delay(2000);
   lcd.setBacklight(GREEN);
   lcd.clear();
- // lcd.setCursor(0,0);
   lcd.print(savedData[0]); lcd.print(F(" cWPM ")); lcd.print (savedData[1]); lcd.print(F(" eWPM"));
   lcd.setCursor(0,1);
   if (saved) state = startMorse;
@@ -228,7 +228,6 @@ void sendSequence(byte number){
     }
     lcd.print (firstLinestr);
     lcd.setCursor(0,1);   
-//    for (int i=0; i<16; i++) firstLinestr[i]=' ';
     colPos = 0;
     t2 = millis() - t0;
   }
@@ -241,17 +240,17 @@ void sendSequence(byte number){
           localnr = random(27,savedData[7]+27);
           break;
       case Mixed:
-	        localnr = random(1,45);
+          localnr = random(1,45);
           break;
       case Special:
-	        localnr = random(37,41);
-  	      break;
+          localnr = random(37,41);	
+          break;
       case ProSign:
-	        localnr = random(41,45);
-  	      break;
+          localnr = random(41,45);
+          break;
       default: //Letters
           localnr = random(1,savedData[6]+1);
-	        break;
+          break;
     }
     playLetter(localnr);    
 // display letter and consider time spent to process it
