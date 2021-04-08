@@ -32,10 +32,10 @@ const byte CHARS[][3] = {
   
   {'/',0b10010,5}, {'?',0b001100,6}, {',',0b110011,6}, {'.',0b010101,6}, // 41 (idx=40)  
 
-  {'x',0b1000101,7}, // BK
-  {'x',0b10001,5}, // BT
-  {'x',0b10110,5}, // KN
-  {'x',0b000101,6} // SK 44 (idx=43)
+  {2,0b10001,5}, // BT
+  {3,0b1000101,7}, // BK 
+  {4,0b10110,5}, // KN
+  {5,0b000101,6} // SK 44 (idx=43)
 
 };
 
@@ -46,15 +46,15 @@ const char *const menuOptions[] = { "Words p/ minute","Words p/ min (F)", "Mode"
 const char *const modeOptions[] = {"Letters","Numbers","Mixed","Special","ProSign"};
 // savedData[] = {WPM, WPM(F),Mode, MinWord, MaxWord, Buzz, Qty Letters , Qty Numbers}
 int savedData[] = {20, 13, 1, 5, 5, 700, 27, 10};
-int savedDataMax[] = {40, 40, 4, 9, 9, 800, 27, 10};
+int savedDataMax[] = {40, 40, 5, 9, 9, 800, 27, 10};
 int savedDataMin[]= {5, 5, 1, 4, 4, 700, 1, 1};
 
-byte icons[6][8] = { { 0x04,0x0e,0x15,0x04,0x04,0x04,0x04 },
-                     { 0x04,0x04,0x04,0x04,0x15,0x0e,0x04 },
-                     { 0x10,0x18,0x18,0x00,0x07,0x02,0x02 },
-                     { 0x10,0x18,0x18,0x00,0x05,0x06,0x05 },
-                     { 0x14,0x18,0x14,0x00,0x19,0x15,0x13 },
-                     { 0x18,0x10,0x18,0x08,0x1d,0x06,0x05 }
+byte icons[6][8] = { { 0x04,0x0e,0x15,0x04,0x04,0x04,0x04 }, // UP
+                     { 0x04,0x04,0x04,0x04,0x15,0x0e,0x04 }, // DOWN
+                     { 0x10,0x18,0x18,0x00,0x07,0x02,0x02 }, // BT
+                     { 0x10,0x18,0x18,0x00,0x05,0x06,0x05 }, // BK
+                     { 0x14,0x18,0x14,0x00,0x19,0x15,0x13 }, // KN
+                     { 0x18,0x10,0x18,0x08,0x1d,0x06,0x05 } // SK
 };
 
 //! Enum of backlight colors.
@@ -76,8 +76,7 @@ unsigned long timeUnit; // = (1000*1.2/savedData[0]);
 unsigned long timeUnitf;
 
 // 1st Line string
-char firstLinestr[16];
-
+char firstLinestr[16]; 
 // Flag to indicated that saved data is valid
 boolean saved = true;
 
@@ -91,6 +90,8 @@ void (*state)() = NULL;
 //*****************************************
 void setup() {
   int savedDataVal[(sizeof(savedData)/sizeof(savedData[0]))];
+  for (int i=0; i<16; i++) firstLinestr[i] = ' ';
+  
   randomSeed(analogRead(0));
   
 #if debug
@@ -131,7 +132,7 @@ void loop() {
 
 //*****************************************
 void startMorse(){
-  if (savedData[2] == (Letters | Numbers | Mixed)) 
+  if ((savedData[2] == Letters) | (savedData[2] == Numbers) | (savedData[2] == Mixed)) 
    sendSequence((byte)random(savedData[3],savedData[4]+1));
   else sendSequence ((byte)1);
 }
@@ -220,9 +221,14 @@ void sendSequence(byte number){
     t0 = millis();
     lcd.clear();
     lcd.setCursor(0,0);
+    for (int i=0; i<16; i++){
+	if (firstLinestr[i] < 10) lcd.write((byte)firstLinestr[i]);
+	else lcd.print((char)firstLinestr[i]);
+	firstLinestr[i]=' ';
+    }
     lcd.print (firstLinestr);
     lcd.setCursor(0,1);   
-    for (int i=0; i<16; i++) firstLinestr[i]=' ';
+//    for (int i=0; i<16; i++) firstLinestr[i]=' ';
     colPos = 0;
     t2 = millis() - t0;
   }
@@ -235,13 +241,13 @@ void sendSequence(byte number){
           localnr = random(27,savedData[7]+27);
           break;
       case Mixed:
-	        localnr = random(1,41);
+	        localnr = random(1,45);
           break;
       case Special:
-	        localnr = random(36,41);
+	        localnr = random(37,41);
   	      break;
       case ProSign:
-	        localnr = random(41,44);
+	        localnr = random(41,45);
   	      break;
       default: //Letters
           localnr = random(1,savedData[6]+1);
@@ -284,9 +290,9 @@ void playLetter(byte idx) {
 
 //*****************************************
 void printLetter(byte idx){
-  if (idx > 40) lcd.write((char)CHARS[idx][0]); 
+  if (idx > 40) lcd.write((byte)CHARS[idx][0]); 
   else lcd.print((char)CHARS[idx][0]);
-  firstLinestr[colPos] = (char)CHARS[idx][0];
+  firstLinestr[colPos] = (byte)CHARS[idx][0];
   colPos++;
 }
 
