@@ -42,12 +42,13 @@ const byte CHARS[][3] = {
 //byte PARIS[] = {12,4,20,2,3};
 
 
-const char *const menuOptions[] = { "Words p/ minute","Words p/ min (F)", "Mode", "Word len min", "Word len max", "Buzz (KHz)", "Qty. of letters", "Qty. of numbers" };
+const char *const menuOptions[] = { "Words p/ minute","Words p/ min (F)", "Mode", "Word len min", "Word len max", "Buzz (KHz)", "Qty. of letters", "Qty. of numbers", "Pause" };
 const char *const modeOptions[] = {"Letters","Numbers","Mixed","Special","ProSign"};
+const char *const pause[] = {"No", "Yes"};
 // savedData[] = {WPM, WPM(F),Mode, MinWord, MaxWord, Buzz, Qty Letters , Qty Numbers}
-int savedData[] = {20, 13, 1, 5, 5, 700, 27, 10};
-int savedDataMax[] = {40, 40, 5, 9, 9, 800, 27, 10};
-int savedDataMin[]= {5, 5, 1, 4, 4, 700, 1, 1};
+int savedData[] = {20, 13, 1, 5, 5, 700, 27, 10, 0};
+int savedDataMax[] = {40, 40, 5, 9, 9, 800, 27, 10, 1};
+int savedDataMin[]= {5, 5, 1, 4, 4, 700, 1, 1, 0};
 
 byte icons[6][8] = { { 0x04,0x0e,0x15,0x04,0x04,0x04,0x04 }, // UP
                      { 0x04,0x04,0x04,0x04,0x15,0x0e,0x04 }, // DOWN
@@ -61,7 +62,6 @@ byte icons[6][8] = { { 0x04,0x0e,0x15,0x04,0x04,0x04,0x04 }, // UP
 enum Icons {UP=0x00, DOWN, BT, BK, KN, SK};
 enum BackLightColor { RED=0x1, GREEN, YELLOW, BLUE, VIOLET, TEAL, WHITE };
 enum Mode { Letters=0x01, Numbers, Mixed, Special, ProSign }; //Letter, Numbers, Mix, Special, ProSign
-
 
 
 byte mult = 0;
@@ -132,9 +132,9 @@ void loop() {
 
 //*****************************************
 void startMorse(){
-  if ((savedData[2] == Letters) | (savedData[2] == Numbers) | (savedData[2] == Mixed)) 
-   sendSequence((byte)random(savedData[3],savedData[4]+1));
-  else sendSequence ((byte)1);
+    if ((savedData[2] == Letters) | (savedData[2] == Numbers) | (savedData[2] == Mixed)) 
+     sendSequence((byte)random(savedData[3],savedData[4]+1));
+    else sendSequence ((byte)1);
 }
 
 
@@ -176,9 +176,10 @@ void menuOption(){
      lcd.print(menuOptions[menu_idx]);
      lcd.setCursor(0,1);
      lcd.print (savedData[menu_idx]);
-     if (menu_idx == 2) { 
+     if ((menu_idx == 2) | (menu_idx ==8)) { 
         lcd.print (" - ");
-        lcd.print (modeOptions[savedData[2]-1]);     
+        if (menu_idx == 2) lcd.print (modeOptions[savedData[2]-1]); 
+        else lcd.print (pause[savedData[8]]);   
      }
   }
 }
@@ -198,7 +199,7 @@ void read_button_clicks() {
 void splashScreen(){
   lcd.clear();
   lcd.setBacklight(TEAL);
-  lcd.print(F("Morse Gen V0.2"));
+  lcd.print(F("Morse Gen V0.3"));
   lcd.setCursor(0,1);
   lcd.print("Mode: "); lcd.print(modeOptions[savedData[2]-1]); 
   delay(2000);
@@ -214,10 +215,19 @@ void splashScreen(){
 //*****************************************
 void sendSequence(byte number){
   byte localnr;
+  static byte linenr = 0;
   unsigned long t0,t1,t2 = 0;
   timeUnit = (1000*1.2/savedData[0]); // in mili seconds
   timeUnitf = ((((60*savedData[0]) - (37.2*savedData[1]))/(savedData[0]*savedData[1]))/19)*1000; // in mili seconds
   if ((colPos+number)>16){
+    linenr++;
+    while ((linenr == 2) & (savedData[8])) {
+      read_button_clicks();
+      if (clicked_buttons & BUTTON_SELECT) {
+         linenr=0;
+         break;	
+      }   
+    }
     t0 = millis();
     lcd.clear();
     lcd.setCursor(0,0);
@@ -230,7 +240,7 @@ void sendSequence(byte number){
     lcd.setCursor(0,1);   
     colPos = 0;
     t2 = millis() - t0;
-  }
+  } 
   for (int i=0; i<number; i++) {
     switch (savedData[2]) {
       case Letters:
@@ -305,10 +315,11 @@ void configValue(byte idx) {
       else savedData[idx]++;
       lcd.setCursor(0,1);
       lcd.print(savedData[idx]); 
-      if (idx==2) {
-	      lcd.print(" - ");
-	      lcd.print(modeOptions[savedData[idx]-1]);
-        lcd.print("       ");	
+      if ((idx==2) | (idx==8)) {
+         lcd.print(" - ");
+         if (idx==2) lcd.print(modeOptions[savedData[idx]-1]);
+         else lcd.print (pause[savedData[8]]); 
+         lcd.print("       ");	
       }
       lcd.setCursor(0,1); 
     }
@@ -322,9 +333,10 @@ void configValue(byte idx) {
       }
       lcd.setCursor (0,1);
       lcd.print(savedData[idx]); 
-      if (idx==2) {
+      if ((idx==2) | (idx==8)) {
         lcd.print(" - ");
-        lcd.print(modeOptions[savedData[idx]-1]);
+        if (idx==2) lcd.print(modeOptions[savedData[idx]-1]);
+        else lcd.print (pause[savedData[8]]); 
         lcd.print("       "); 
       }
       lcd.setCursor(0,1);  
