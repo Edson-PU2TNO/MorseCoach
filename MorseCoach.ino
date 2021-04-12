@@ -76,7 +76,7 @@ unsigned long timeUnit; // = (1000*1.2/savedData[0]);
 unsigned long timeUnitf;
 
 // 1st Line string
-char firstLinestr[16]; 
+char firstLinestr[17]; 
 // Flag to indicated that saved data is valid
 boolean saved = true;
 
@@ -133,7 +133,7 @@ void loop() {
 //*****************************************
 void startMorse(){
     if ((savedData[2] == Letters) | (savedData[2] == Numbers) | (savedData[2] == Mixed)) 
-     sendSequence((byte)random(savedData[3],savedData[4]+1));
+    sendSequence((byte)random(savedData[3],savedData[4]+1));
     else sendSequence ((byte)1);
 }
 
@@ -219,7 +219,7 @@ void sendSequence(byte number){
   unsigned long t0,t1,t2 = 0;
   timeUnit = (1000*1.2/savedData[0]); // in mili seconds
   timeUnitf = ((((60*savedData[0]) - (37.2*savedData[1]))/(savedData[0]*savedData[1]))/19)*1000; // in mili seconds
-  if ((colPos+number)>16){
+  if ((colPos+number+1) > 17){
     linenr++;
     while ((linenr == 2) & (savedData[8])) {
       read_button_clicks();
@@ -231,12 +231,11 @@ void sendSequence(byte number){
     t0 = millis();
     lcd.clear();
     lcd.setCursor(0,0);
-    for (int i=0; i<16; i++){
-	if (firstLinestr[i] < 10) lcd.write((byte)firstLinestr[i]);
-	else lcd.print((char)firstLinestr[i]);
-	firstLinestr[i]=' ';
+    for (int i=0; i<17; i++){
+	     if (firstLinestr[i] < 10) lcd.write((byte)firstLinestr[i]);
+	     else lcd.print((char)firstLinestr[i]);
+	     firstLinestr[i]=' ';
     }
-    lcd.print (firstLinestr);
     lcd.setCursor(0,1);   
     colPos = 0;
     t2 = millis() - t0;

@@ -8,8 +8,7 @@ void playLetter(byte idx);
 void printLetter(byte idx);
 void configValue(byte idx);
 
-#define debug false
-
+#define debug true
 #define mask 0b10000000
 
 #define charSpace (3)*timeUnitf
