@@ -225,6 +225,7 @@ void sendSequence(byte number){
       read_button_clicks();
       if (clicked_buttons & BUTTON_SELECT) {
          linenr=0;
+         delay (1500);
          break;	
       }   
     }
