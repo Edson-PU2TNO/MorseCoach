@@ -48,7 +48,7 @@ const char *const pause[] = {"No", "Yes"};
 // savedData[] = {WPM, WPM(F),Mode, MinWord, MaxWord, Buzz, Qty Letters , Qty Numbers}
 int savedData[] = {20, 13, 1, 5, 5, 700, 27, 10, 0};
 int savedDataMax[] = {40, 40, 5, 9, 9, 800, 27, 10, 1};
-int savedDataMin[]= {5, 5, 1, 4, 4, 700, 1, 1, 0};
+int savedDataMin[]= {5, 5, 1, 1, 1, 650, 1, 1, 0};
 
 byte icons[6][8] = { { 0x04,0x0e,0x15,0x04,0x04,0x04,0x04 }, // UP
                      { 0x04,0x04,0x04,0x04,0x15,0x0e,0x04 }, // DOWN
