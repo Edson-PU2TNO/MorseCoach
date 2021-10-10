@@ -12,6 +12,7 @@
  0 - dit
 */
 
+/*
 const byte CHARS[][3] = {
   {' ',0b0,0}, // Space
   
@@ -30,27 +31,91 @@ const byte CHARS[][3] = {
   {'7',0b11000,5},  {'8',0b11100,5},  {'9',0b11110,5}, // 36 (idx=35)
   {'0',0b11111,5}, // 37 (idx=36)
   
-  {'/',0b10010,5} // 38 (idx=37)  
+  {'/',0b10010,5}, {'?',0b001100,6}, {',',0b110011,6}, {'.',0b010101,6}, // 41 (idx=40)  
+
+  {2,0b10001,5}, // BT
+  {3,0b1000101,7}, // BK 
+  {4,0b10110,5}, // KN
+  {5,0b000101,6} // SK 44 (idx=43)
+
+};*/
+
+// Koch Char Sequence
+const byte CHARS[][3] = {
+  {' ',0b0,0}, // Space
+  
+ 
+  {'K',0b101,3},
+  {'M',0b11,2},
+  {'U',0b001,3},
+  {'R',0b010,3},  
+  {'E',0b0,1},
+  {'S',0b000,3}, 
+  {'N',0b10,2},
+  {'A',0b01,2},
+  {'P',0b0110,4},
+  {'L',0b0100,4},
+  {'W',0b011,3},   
+  {'I',0b00,2},
+  
+  {'T',0b1,1},
+  {'O',0b111,3},
+  
+  {'D',0b100,3},
+  {'F',0b0010,4},
+  
+  {'J',0b0111,4},
+  {'L',0b0100,4},
+  {'Q',0b1101,4},
+  {'X',0b1001,4},
+  {'B',0b1000,4},
+  {'Y',0b1011,4},
+  
+  
+  {'H',0b0000,4},
+  {'Z',0b0011,4},
+  {'G',0b110,3},
+ 
+  {'V',0b0001,4},
+  {'C',0b1010,4}, //27 (idx=26) 
+  
+  {'1',0b01111,5},  {'2',0b00111,5},  {'3',0b00011,5},
+  {'4',0b00001,5},  {'5',0b00000,5},  {'6',0b10000,5},
+  {'7',0b11000,5},  {'8',0b11100,5},  {'9',0b11110,5}, // 36 (idx=35)
+  {'0',0b11111,5}, // 37 (idx=36)
+  
+  {'/',0b10010,5}, {'?',0b001100,6}, {',',0b110011,6}, {'.',0b010101,6}, // 41 (idx=40)  
+
+  {2,0b10001,5}, // BT
+  {3,0b1000101,7}, // BK 
+  {4,0b10110,5}, // KN
+  {5,0b000101,6} // SK 44 (idx=43)
+
 };
 
 //byte PARIS[] = {12,4,20,2,3};
 
 
-const char *const menuOptions[] = { "Words p/ minute","Words p/ min (F)", "Mode", "Word len min", "Word len max", "Buzz (KHz)", "Qty. of letters", "Qty. of numbers" };
-const char *const modeOptions[] = {"Letters","Numbers","Mixed"};
+const char *const menuOptions[] = { "Words p/ minute","Words p/ min (F)", "Mode", "Word len min", "Word len max", "Buzz (KHz)", "Qty. of letters", "Qty. of numbers", "Pause" };
+const char *const modeOptions[] = {"Letters","Numbers","Mixed","Special","ProSign"};
+const char *const pause[] = {"No", "Yes"};
 // savedData[] = {WPM, WPM(F),Mode, MinWord, MaxWord, Buzz, Qty Letters , Qty Numbers}
-int savedData[] = {20, 13, 1, 5, 5, 700, 27, 10};
-int savedDataMax[] = {40, 40, 3, 9, 9, 800, 27, 10};
-int savedDataMin[]= {5, 5, 1, 4, 4, 700, 1, 1};
+int savedData[] = {20, 13, 1, 5, 5, 700, 27, 10, 0};
+int savedDataMax[] = {40, 40, 5, 9, 9, 800, 27, 10, 1};
+int savedDataMin[]= {5, 5, 1, 1, 1, 550, 1, 1, 0};
 
-byte icons[2][8] = { { 0x04,0x0e,0x15,0x04,0x04,0x04,0x04 },
-                     { 0x04,0x04,0x04,0x04,0x15,0x0e,0x04 } };
+byte icons[6][8] = { { 0x04,0x0e,0x15,0x04,0x04,0x04,0x04 }, // UP
+                     { 0x04,0x04,0x04,0x04,0x15,0x0e,0x04 }, // DOWN
+                     { 0x10,0x18,0x18,0x00,0x07,0x02,0x02 }, // BT
+                     { 0x10,0x18,0x18,0x00,0x05,0x06,0x05 }, // BK
+                     { 0x14,0x18,0x14,0x00,0x19,0x15,0x13 }, // KN
+                     { 0x18,0x10,0x18,0x08,0x1d,0x06,0x05 } // SK
+};
 
 //! Enum of backlight colors.
-enum Icons {UP=0x00, DOWN};
+enum Icons {UP=0x00, DOWN, BT, BK, KN, SK};
 enum BackLightColor { RED=0x1, GREEN, YELLOW, BLUE, VIOLET, TEAL, WHITE };
-enum Mode { Letters=0x01, Numbers, Mixed }; //Letter, Numbers, Mix
-
+enum Mode { Letters=0x01, Numbers, Mixed, Special, ProSign }; //Letter, Numbers, Mix, Special, ProSign
 
 
 byte mult = 0;
@@ -65,8 +130,7 @@ unsigned long timeUnit; // = (1000*1.2/savedData[0]);
 unsigned long timeUnitf;
 
 // 1st Line string
-char firstLinestr[16];
-
+char firstLinestr[17]; 
 // Flag to indicated that saved data is valid
 boolean saved = true;
 
@@ -80,22 +144,33 @@ void (*state)() = NULL;
 //*****************************************
 void setup() {
   int savedDataVal[(sizeof(savedData)/sizeof(savedData[0]))];
+  for (int i=0; i<16; i++) firstLinestr[i] = ' ';
+  
   randomSeed(analogRead(0));
-  // Serial.begin(9600); // Uncomment to support serial communication  
+  
+#if debug
+  Serial.begin(9600);  
+#endif
+
   lcd.begin(16, 2);
-
-
   if (lcd.readButtons() & (BUTTON_UP | BUTTON_DOWN)) state = config_Menu;
   else state = splashScreen;
 
+// Creating LCD chars
   lcd.createChar(UP, icons[UP]);
   lcd.createChar(DOWN, icons[DOWN]);  
-
+  lcd.createChar(BT, icons[BT]); 
+  lcd.createChar(BK, icons[BK]); 
+  lcd.createChar(KN, icons[KN]); 
+  lcd.createChar(SK, icons[SK]);
+ 
 // Validating savedData
-
   EEPROM.get (0,savedDataVal);
   for (int i=0; i<(sizeof(savedDataVal)/sizeof(savedDataVal[0])); i++) {
     if ((savedDataVal[i]<savedDataMin[i]) | (savedDataVal[i]>savedDataMax[i])){
+#if debug
+      Serial.println(savedDataVal[i]);
+#endif
       savedData[i] = -1;
       saved = false;
     }  
@@ -111,7 +186,9 @@ void loop() {
 
 //*****************************************
 void startMorse(){
-  sendSequence((byte)random(savedData[3],savedData[4]+1));
+    if ((savedData[2] == Letters) | (savedData[2] == Numbers) | (savedData[2] == Mixed)) 
+    sendSequence((byte)random(savedData[3],savedData[4]+1));
+    else sendSequence ((byte)1);
 }
 
 
@@ -145,16 +222,18 @@ void menuOption(){
       lcd.setBacklight(YELLOW);
     }
     else if (clicked_buttons & BUTTON_SELECT) {
-    state = splashScreen;
+    if (checkInc()) state = menuOption; 
+    else state = splashScreen;
     return;
     }
      lcd.setCursor(0,0);
      lcd.print(menuOptions[menu_idx]);
      lcd.setCursor(0,1);
      lcd.print (savedData[menu_idx]);
-     if (menu_idx == 2) { 
+     if ((menu_idx == 2) | (menu_idx ==8)) { 
         lcd.print (" - ");
-        lcd.print (modeOptions[savedData[2]-1]);     
+        if (menu_idx == 2) lcd.print (modeOptions[savedData[2]-1]); 
+        else lcd.print (pause[savedData[8]]);   
      }
   }
 }
@@ -174,13 +253,12 @@ void read_button_clicks() {
 void splashScreen(){
   lcd.clear();
   lcd.setBacklight(TEAL);
-  lcd.print(F("Morse Gen V0.2"));
+  lcd.print(F("Morse Gen V0.3"));
   lcd.setCursor(0,1);
   lcd.print("Mode: "); lcd.print(modeOptions[savedData[2]-1]); 
   delay(2000);
   lcd.setBacklight(GREEN);
   lcd.clear();
- // lcd.setCursor(0,0);
   lcd.print(savedData[0]); lcd.print(F(" cWPM ")); lcd.print (savedData[1]); lcd.print(F(" eWPM"));
   lcd.setCursor(0,1);
   if (saved) state = startMorse;
@@ -191,19 +269,32 @@ void splashScreen(){
 //*****************************************
 void sendSequence(byte number){
   byte localnr;
+  static byte linenr = 0;
   unsigned long t0,t1,t2 = 0;
   timeUnit = (1000*1.2/savedData[0]); // in mili seconds
   timeUnitf = ((((60*savedData[0]) - (37.2*savedData[1]))/(savedData[0]*savedData[1]))/19)*1000; // in mili seconds
-  if ((colPos+number)>16){
+  if ((colPos+number+1) > 17){
+    linenr++;
+    while ((linenr == 2) & (savedData[8])) {
+      read_button_clicks();
+      if (clicked_buttons & BUTTON_SELECT) {
+         linenr=0;
+         delay (1500);
+         break;	
+      }   
+    }
     t0 = millis();
     lcd.clear();
     lcd.setCursor(0,0);
-    lcd.print (firstLinestr);
+    for (int i=0; i<17; i++){
+	     if (firstLinestr[i] < 10) lcd.write((byte)firstLinestr[i]);
+	     else lcd.print((char)firstLinestr[i]);
+	     firstLinestr[i]=' ';
+    }
     lcd.setCursor(0,1);   
-    for (int i=0; i<16; i++) firstLinestr[i]=' ';
     colPos = 0;
     t2 = millis() - t0;
-  }
+  } 
   for (int i=0; i<number; i++) {
     switch (savedData[2]) {
       case Letters:
@@ -211,13 +302,19 @@ void sendSequence(byte number){
           break;
       case Numbers:
           localnr = random(27,savedData[7]+27);
-	  break;
+          break;
       case Mixed:
-	  localnr = random(1,38);
+          localnr = random(1,45);
+          break;
+      case Special:
+          localnr = random(37,41);	
+          break;
+      case ProSign:
+          localnr = random(41,45);
           break;
       default: //Letters
           localnr = random(1,savedData[6]+1);
-	  break;
+          break;
     }
     playLetter(localnr);    
 // display letter and consider time spent to process it
@@ -256,8 +353,9 @@ void playLetter(byte idx) {
 
 //*****************************************
 void printLetter(byte idx){
-  lcd.print((char)CHARS[idx][0]);
-  firstLinestr[colPos] = (char)CHARS[idx][0];
+  if (idx > 40) lcd.write((byte)CHARS[idx][0]); 
+  else lcd.print((char)CHARS[idx][0]);
+  firstLinestr[colPos] = (byte)CHARS[idx][0];
   colPos++;
 }
 
@@ -271,10 +369,11 @@ void configValue(byte idx) {
       else savedData[idx]++;
       lcd.setCursor(0,1);
       lcd.print(savedData[idx]); 
-      if (idx==2) {
-	      lcd.print(" - ");
-	      lcd.print(modeOptions[savedData[idx]-1]);
-        lcd.print("       ");	
+      if ((idx==2) | (idx==8)) {
+         lcd.print(" - ");
+         if (idx==2) lcd.print(modeOptions[savedData[idx]-1]);
+         else lcd.print (pause[savedData[8]]); 
+         lcd.print("       ");	
       }
       lcd.setCursor(0,1); 
     }
@@ -288,9 +387,10 @@ void configValue(byte idx) {
       }
       lcd.setCursor (0,1);
       lcd.print(savedData[idx]); 
-      if (idx==2) {
+      if ((idx==2) | (idx==8)) {
         lcd.print(" - ");
-        lcd.print(modeOptions[savedData[idx]-1]);
+        if (idx==2) lcd.print(modeOptions[savedData[idx]-1]);
+        else lcd.print (pause[savedData[8]]); 
         lcd.print("       "); 
       }
       lcd.setCursor(0,1);  
